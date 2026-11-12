@@ -19,3 +19,17 @@ target_compile_definitions(fuzzy_extractor_lfw_adamtrans_test PRIVATE
 )
 target_link_libraries(fuzzy_extractor_lfw_adamtrans_test PRIVATE OpenSSL::Crypto)
 
+add_executable(fuzzy_extractor_lfw_full
+    fuzzy_extractor_lfw_full.asc
+    fuzzy_extractor_lfw_crypto.cpp
+)
+
+target_compile_features(fuzzy_extractor_lfw_full PRIVATE cxx_std_17)
+target_compile_options(fuzzy_extractor_lfw_full PRIVATE
+    $<$<COMPILE_LANGUAGE:ASC>:--npu-arch=${CMAKE_ASC_ARCHITECTURES}>
+)
+target_compile_definitions(fuzzy_extractor_lfw_full PRIVATE
+    WIFAKEY_BG2_PATH="${CMAKE_CURRENT_SOURCE_DIR}/wifakey_bg2_set2.tsv"
+)
+target_link_libraries(fuzzy_extractor_lfw_full PRIVATE OpenSSL::Crypto)
+

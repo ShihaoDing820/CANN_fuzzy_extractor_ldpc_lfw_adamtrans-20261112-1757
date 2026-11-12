@@ -46,6 +46,24 @@
 ./run-tests.sh /path/to/embeddings.csv /path/to/lfw_issame.csv
 ```
 
+对全部 6000 对 LFW 样本进行评估：
+
+```bash
+./run-all.sh
+```
+
+也可以指定数据位置：
+
+```bash
+./run-all.sh /path/to/embeddings.csv /path/to/lfw_issame.csv
+```
+
+`run-tests.sh` 保留原来的 5 对正样本 + 5 对负样本快速回归测试；
+`run-all.sh` 使用独立的 `fuzzy_extractor_lfw_full` 程序处理全部 6000 对，
+输出 TP/TN/FP/FN、GMR、FMR、FNMR 和总耗时。全量模式固定启动 20 个
+CANN worker，并由 worker 循环处理 12000 个特征和 18000 个 LDPC 块，
+避免 CPU 仿真环境为每个样本创建一个执行进程。
+
 特征 CSV 必须是 `12000 × 512`，每两行一对，并与 6000 行标签文件顺序一致。150 MB 特征文件不上传到 GitHub。
 
 ## 当前测试
@@ -61,6 +79,15 @@
 [RESULT] CANN/Host pipeline agreement: 10/10
 [RESULT] Biometric classification: 10/10
 [PASS] Fuzzy extractor LFW CANN pipeline completed.
+```
+
+全量模式的实测结果记录在下方；如更换特征或参数，请以新一次运行输出为准：
+
+```text
+[FULL_RESULT] TP=2989 TN=2837 FP=163 FN=11
+[FULL_RESULT] accuracy=0.971000 GMR=0.996333 FMR=0.054333 FNMR=0.003667
+[FULL_RESULT] valid_pipeline_pairs=6000/6000 average_ldpc_iterations=22.584722 elapsed_seconds=9.708577
+[PASS] Full 6000-pair fuzzy extractor CANN evaluation completed.
 ```
 
 分类结果不是程序退出条件；即使某个真实样本识别错误，只要 CANN 管线正确执行且与参考实现一致，测试仍可完成。
@@ -79,7 +106,7 @@
 ## 局限
 
 - 当前是 CANN CPU 仿真，不代表真实 NPU 性能。
-- 10 对样本只验证端到端流程，不是正式准确率报告。
+- 10 对快速样本用于端到端回归；6000 对全量模式用于遍历数据集和输出统计，仍不等同于规范的交叉验证论文指标。
 - 阈值使用整份输入特征统计；正式实验必须按训练折拟合、测试折固定。
 - 固定可复现掩码与伪随机码字仅供测试，生产系统必须使用 CSPRNG 和经过审计的 KDF/Extractor。
 - 还需要评估见证熵、helper data 泄漏、FMR/FNMR、可链接性和 side-channel。
